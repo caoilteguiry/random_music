@@ -3,7 +3,6 @@
 from __future__ import with_statement
 import os
 import sys
-import time
 import glob
 from stat import S_ISREG, ST_MTIME, ST_MODE
 from socket import gethostname
@@ -25,12 +24,12 @@ License: BSD License
 class DirectoryNotFoundException(Exception):
     def __init__(self, dirname):
         self.dirname=dirname
-        self.value="The '"+dirname+"' directory could not be found"
+        self.value="The '%s' directory could not be found" % dirname
     def __str__(self):
         return repr(self.value)
 
 def main():
-    if sys.platform=="linux2" or sys.platform=="darwin":
+    if sys.platform in ["linux2", "darwin"]:
         rmp = RandomMusicPlaylist()
         rmp.playMusic()
     else:
@@ -103,7 +102,7 @@ class RandomMusicPlaylist:
 
     def processFlags(self):
         """ Process command-line arguments and options """
-        default_music_client=self.music_client
+        default_music_client = self.music_client
         parser = OptionParser()
         parser.add_option("-u", "--update-index", action="store_true", 
                     dest="update_index", default=False, 
