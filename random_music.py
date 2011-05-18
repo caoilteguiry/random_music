@@ -63,7 +63,10 @@ class RandomMusicPlaylist:
             self.randomise = config.getboolean("config", "randomise")            
             self.index_dir = config.get("config", "index_dir")
             self.music_client = config.get("config", "music_client")
-            self.music_dirs = [config.get("config", "music_dirs")] # TODO: convert csv to list
+            # music_dirs may be separated by commas. Unfortunately the
+            # createConfigFile() does not take account of this at the
+            # moment. TODO: implement this
+            self.music_dirs = config.get("config", "music_dirs").split(",") 
         except NoOptionError:
             print "No such option in config file"
             sys.exit(1)
@@ -75,8 +78,20 @@ class RandomMusicPlaylist:
             sys.exit(1)
         
         # Verify that our music dirs are actually dirs
-        for dir in self.music_dirs:
-            checkDir(dir)
+        for i, dir in enumerate(self.music_dirs):
+            try:
+                checkDir(dir)
+            except DirectoryNotFoundException:
+                # If an invalid directory was listed we want to remove it from 
+                # the list and carry on. It is likely that the user provided a 
+                # path containing a folder with a comma in the filename, so lets
+                # warn of that
+                self.music_dirs.pop(i)
+                print ("WARNING: The '%s' directory is invalid. Please review your "
+                        "config file. Please note that directories must not contain"
+                        "commas as these are used as a delimiter" % dir)
+                pass
+                
         
         if not os.path.isdir(self.index_dir):
             print "Creating indicies dir "+self.index_dir
