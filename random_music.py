@@ -40,6 +40,9 @@ def checkDir(dir):
     if not os.path.isdir(dir):
         raise DirectoryNotFoundException(dir)
 
+pathname, scriptname = os.path.split(sys.argv[0])
+pathname = os.path.abspath(pathname)        
+
 class RandomMusicPlaylist:
     def __init__(self):
         self.loadConfig()
@@ -49,8 +52,6 @@ class RandomMusicPlaylist:
 
     def loadConfig(self):
         """ Load configuration variables """
-        pathname, scriptname = os.path.split(sys.argv[0])
-        pathname = os.path.abspath(pathname)        
         self.config_file = pathname+"/config.txt"
         if not os.path.exists(self.config_file):
             self.createConfigFile()
@@ -89,7 +90,7 @@ class RandomMusicPlaylist:
         config.add_section('config')
         config.set('config', 'loop_songs', 'true')
         config.set('config', 'randomise', 'true')
-        config.set('config', 'index_dir', './indicies')
+        config.set('config', 'index_dir', pathname+'/indicies')
         config.set('config', 'music_client', 'mplayer')
 
         user_music_dir = ""
