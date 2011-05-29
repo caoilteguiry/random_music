@@ -57,7 +57,11 @@ class RandomMusicPlaylist:
 
     def loadConfig(self):
         """ Load configuration variables """
-        self.config_file = os.path.join(os.path.expanduser("~")+"/.random_music/config.txt")
+        self.random_music_home = os.path.join(os.path.expanduser("~")+"/.random_music/")
+        if not os.path.isdir(self.random_music_home):
+            os.makedirs(self.random_music_home)
+            
+        self.config_file = os.path.join(self.random_music_home+"config.txt")
         if not os.path.exists(self.config_file):
             self.createConfigFile()
             
@@ -110,7 +114,7 @@ class RandomMusicPlaylist:
         config.add_section('config')
         config.set('config', 'loop_songs', 'true')
         config.set('config', 'randomise', 'true')
-        config.set('config', 'index_dir', os.path.join(os.path.expanduser("~")+'/.random_music/indicies'))
+        config.set('config', 'index_dir', os.path.join(self.random_music_home+"/indicies"))
         config.set('config', 'music_client', 'mplayer')
 
         user_music_dir = ""
