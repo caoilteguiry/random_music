@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+"""
+Author: Caoilte Guiry
+Name: random_music.py
+Description: Plays a pseudo-random sequence of songs.
+License: BSD License
+"""
+
 from __future__ import with_statement
 import os
 import sys
@@ -14,12 +21,10 @@ import time
 from ConfigParser import *
 from optparse import OptionParser
 
-"""
-Author: Caoilte Guiry
-Name: random_music.py
-Description: Plays a pseudo-random sequence of songs.
-License: BSD License
-"""
+__author__ = "Caoilte Guiry"
+__copyright__ = "Copyright (c) 2011 Caoilte Guiry."
+__version__="2.0.4"
+
 
 class DirectoryNotFoundException(Exception):
     def __init__(self, dirname):
@@ -52,7 +57,7 @@ class RandomMusicPlaylist:
 
     def loadConfig(self):
         """ Load configuration variables """
-        self.config_file = pathname+"/config.txt"
+        self.config_file = os.path.join(os.path.expanduser("~")+"/.random_music/config.txt")
         if not os.path.exists(self.config_file):
             self.createConfigFile()
             
@@ -105,12 +110,12 @@ class RandomMusicPlaylist:
         config.add_section('config')
         config.set('config', 'loop_songs', 'true')
         config.set('config', 'randomise', 'true')
-        config.set('config', 'index_dir', pathname+'/indicies')
+        config.set('config', 'index_dir', os.path.join(os.path.expanduser("~")+'/.random_music/indicies'))
         config.set('config', 'music_client', 'mplayer')
 
         user_music_dir = ""
         while not os.path.isdir(user_music_dir):
-            user_music_dir = raw_input("Input full path to your music dir:")
+            user_music_dir = raw_input("Input a csv list of full paths to your music dirs:")
         config.set('config', 'music_dirs', user_music_dir)
                 
         with open(self.config_file, 'wb') as configfile:
