@@ -23,7 +23,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__="2.0.4"
+__version__="2.0.5"
 
 
 class DirectoryNotFoundException(Exception):
@@ -240,7 +240,7 @@ class RandomMusicPlaylist:
                                 
                 song = self.songs[song_index]
                 print "Playing song %d of %d" %(song_index+1, self.num_files)
-                print song
+                print self.cleanSongName(song)
                 
                 # Disabled the following as it got pretty annoying seeing a torrent
                 # of notifications for non-music files (mplayer gracefully skips these).            
@@ -258,6 +258,17 @@ class RandomMusicPlaylist:
                     time.sleep(0.1) # HACK to allow repeated ctrl+c to exit outright
                 except KeyboardInterrupt:
                     print "\nExiting..."
-                    sys.exit(0) 
+                    sys.exit(0)
+
+    def cleanSongName(self, songname):
+        """ Remove the music_dir from the beginning of the song name """        
+        # Reverse-sort the music_dirs list by string length, as if one music_dir is a subset
+        # of the other (e.g. "/music" and "/music/jazz"), we could end up cutting off too little
+        for md in sorted(self.music_dirs, key=len, reverse=True):
+            if songname.find(md)==0:
+                songname = songname.replace(md, "")
+                break # shouldn't need to do any more replacements
+        return songname
+        
 if __name__=="__main__":
     sys.exit(main())
