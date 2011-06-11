@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-"""
+""" Plays a pseudo-random sequence of songs.
+
 Author: Caoilte Guiry
 Name: random_music.py
-Description: Plays a pseudo-random sequence of songs.
 License: BSD License
 """
 
@@ -15,15 +15,15 @@ from stat import S_ISREG, ST_MTIME, ST_MODE
 from socket import gethostname
 from random import randint
 import subprocess
-import signal
 import datetime
 import time
-from ConfigParser import *
+from ConfigParser import ConfigParser
 from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__="2.0.5"
+__version__="2.0.6"
+__license__ = "BSD License"
 
 
 class DirectoryNotFoundException(Exception):
@@ -164,17 +164,17 @@ class RandomMusicPlaylist:
     def parseSearchTerms(self, search_terms):
         """ Convert search terms to a list (or a list of lists for OR searches) """
         # v. kludgish.. TODO: do this a little more gracefully
-        a = []
-        b = [] 
+        self.search_terms, b = [], []
         for index, st in enumerate(search_terms):
             if st=="OR":
-                a.append(b)
-                b=[]
+                self.search_terms.append(b)
+                b = []
             else:
                 b.append(st)
+
             if index+1==len(search_terms):
-                a.append(b)
-        self.search_terms = a
+                self.search_terms.append(b)
+        
    
     def updateIndex(self):
         """ Update the index file """

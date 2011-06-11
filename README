@@ -24,3 +24,8 @@ some point.
 
 If you do not have mplayer installed, you can edit the config file (config.txt)
 and set music_client to something else.
+
+For convenience, you can add this to your enviornmental path, and alias it to
+something like 'music'; e.g., add the following to your ~/.bashrc:
+PATH=$PATH:~/random_music/
+alias music='random_music.py'
