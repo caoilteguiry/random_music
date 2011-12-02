@@ -60,6 +60,18 @@ def main():
         rmp = RandomMusicPlaylist()
         rmp.play_music()
 
+def which(name):
+    """
+    Equivalent of unix which command - return full path to a binary if it
+    exists.
+    """
+    for path in os.environ["PATH"].split(":"):
+        potential_path = os.path.join(path, name)
+        if os.path.exists(potential_path):
+            break
+        else:
+            potential_path = None
+    return potential_path
 
 def create_config_file(config_file, random_music_home):
     """Create a configuration file."""
@@ -70,7 +82,13 @@ def create_config_file(config_file, random_music_home):
     config.set('config', 'randomise', 'true')
     config.set('config', 'index_dir', os.path.join(random_music_home, 
                                                    "indicies"))
-    config.set('config', 'music_client', 'mplayer') # TODO: check exists?
+    music_client = "mplayerio"
+    while not which(music_client):
+        music_client = raw_input("The music player '%s' could not be found "
+                                   "on your path. Please input a different "
+                                   "music player:" % music_client)   
+    
+    config.set('config', 'music_client', music_client) 
 
     user_music_dirs = ""
     while not all([os.path.isdir(d) for d in user_music_dirs.split(",")]):
