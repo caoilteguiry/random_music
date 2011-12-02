@@ -18,17 +18,20 @@ from random import randint
 import subprocess
 import datetime
 import time
-from ConfigParser import ConfigParser, NoOptionError, NoSectionError, \
-                         MissingSectionHeaderError, RawConfigParser
+from ConfigParser import (ConfigParser, NoOptionError, NoSectionError,
+                         MissingSectionHeaderError, RawConfigParser)
 from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.0.9"
+__version__ = "2.0.10"
 __license__ = "BSD License"
 
 
-class DirectoryNotFoundException(Exception):
+class _Error(Exception):
+    pass
+
+class DirectoryNotFoundError(_Error):
     """The specified directory could not be found."""
     def __init__(self, dirname):
         self.dirname = dirname
@@ -37,19 +40,56 @@ class DirectoryNotFoundException(Exception):
     def __str__(self):
         return repr(self.value)
 
+class MissingConfigFileError(_Error):
+    """Config file could not be found."""
+    def __init__(self, config_file):
+        self.config_file = config_file
+        self.value = "The config file '%s' could not be found" % config_file
+    def __str__(self):
+        return repr(self.value)
+
+
 def main():
     """Generate a playlist and start playing the songs."""
     if sys.platform in ["linux2", "darwin"]:
-        rmp = RandomMusicPlaylist()
-        rmp.play_music()
+        try:
+            rmp = RandomMusicPlaylist()
+            rmp.play_music()
+        except MissingConfigFileError:
+            create_config_file(RandomMusicPlaylist._get_config_file(), 
+                               RandomMusicPlaylist._get_home_dir())
+            rmp = RandomMusicPlaylist()
+            rmp.play_music()
     else:
         sys.stderr.write("Sorry, only Linux and Mac are currently supported")
         sys.exit(1)
+
+
+def create_config_file(config_file, random_music_home):
+    """Create a configuration file."""
+    print "You do not appear to have a config file, lets create one!"
+    config = RawConfigParser()
+    config.add_section('config')
+    config.set('config', 'loop_songs', 'true')
+    config.set('config', 'randomise', 'true')
+    config.set('config', 'index_dir', os.path.join(random_music_home, 
+                                                   "indicies"))
+    config.set('config', 'music_client', 'mplayer') # TODO: check exists?
+
+    user_music_dirs = ""
+    while not all([os.path.isdir(d) for d in user_music_dirs.split(",")]):
+        user_music_dirs = raw_input("Input a csv list of full paths to "
+                                   "your music dirs:")
+    config.set('config', 'music_dirs', user_music_dirs)
+            
+    with open(config_file, 'wb') as fh:
+        config.write(fh)
+
   
 def check_is_dir(path):
     """Check if a directory exists."""
     if not os.path.isdir(path):
-        raise DirectoryNotFoundException(path)
+        raise DirectoryNotFoundError(path)
 
 PATHNAME, SCRIPTNAME = os.path.split(sys.argv[0])
 PATHNAME = os.path.abspath(PATHNAME)        
@@ -62,18 +102,24 @@ class RandomMusicPlaylist:
         self.index_file = self.get_index_file()
         self.generate_list()
 
+    @staticmethod
+    def _get_home_dir():
+        return os.path.join(os.path.expanduser("~"), ".random_music")
+
+    @staticmethod    
+    def _get_config_file():
+        return os.path.join(os.path.expanduser("~"), ".random_music", "config.txt")
+
+
     def load_config(self):
         """Load configuration variables."""
-        self.random_music_home = os.path.join(os.path.expanduser("~"), 
-                                              ".random_music")
-        print self.random_music_home
+        self.random_music_home = self._get_home_dir()
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
             
-        self.config_file = os.path.join(self.random_music_home, 
-                                        "config.txt")
+        self.config_file = self._get_config_file()
         if not os.path.exists(self.config_file):
-            self.create_config_file()
+            raise MissingConfigFileError(self.config_file)
             
         config = ConfigParser()
         config.read(self.config_file)
@@ -100,7 +146,7 @@ class RandomMusicPlaylist:
         for i, path in enumerate(self.music_dirs):
             try:
                 check_is_dir(path)
-            except DirectoryNotFoundException:
+            except DirectoryNotFoundError:
                 # If an invalid directory was listed we want to remove it from 
                 # the list and carry on. It is likely that the user provided a 
                 # path containing a folder with a comma in the filename, so 
@@ -118,25 +164,7 @@ class RandomMusicPlaylist:
             os.mkdir(self.index_dir)
             self.update_index()
 
-    def create_config_file(self):
-        """Create a configuration file."""
-        print "You do not appear to have a config file, lets create one!"
-        config = RawConfigParser()
-        config.add_section('config')
-        config.set('config', 'loop_songs', 'true')
-        config.set('config', 'randomise', 'true')
-        config.set('config', 'index_dir', os.path.join(self.random_music_home, 
-                                                       "indicies"))
-        config.set('config', 'music_client', 'mplayer') # TODO: check exists?
 
-        user_music_dirs = ""
-        while not all([os.path.isdir(d) for d in user_music_dirs.split(",")]):
-            user_music_dirs = raw_input("Input a csv list of full paths to "
-                                       "your music dirs:")
-        config.set('config', 'music_dirs', user_music_dirs)
-                
-        with open(self.config_file, 'wb') as configfile:
-            config.write(configfile)
 
     def process_flags(self):
         """Process command-line arguments and options."""
