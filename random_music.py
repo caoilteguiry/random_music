@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.0.8"
+__version__ = "2.0.9"
 __license__ = "BSD License"
 
 
@@ -127,13 +127,13 @@ class RandomMusicPlaylist:
         config.set('config', 'randomise', 'true')
         config.set('config', 'index_dir', os.path.join(self.random_music_home, 
                                                        "indicies"))
-        config.set('config', 'music_client', 'mplayer')
+        config.set('config', 'music_client', 'mplayer') # TODO: check exists?
 
-        user_music_dir = ""
-        while not os.path.isdir(user_music_dir):
-            user_music_dir = raw_input("Input a csv list of full paths to "
+        user_music_dirs = ""
+        while not all([os.path.isdir(d) for d in user_music_dirs.split(",")]):
+            user_music_dirs = raw_input("Input a csv list of full paths to "
                                        "your music dirs:")
-        config.set('config', 'music_dirs', user_music_dir)
+        config.set('config', 'music_dirs', user_music_dirs)
                 
         with open(self.config_file, 'wb') as configfile:
             config.write(configfile)
