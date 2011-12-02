@@ -5,6 +5,7 @@
 Author: Caoilte Guiry
 Name: random_music.py
 License: BSD License
+
 """
 
 from __future__ import with_statement
@@ -23,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.0.7"
+__version__ = "2.0.8"
 __license__ = "BSD License"
 
 
@@ -42,8 +43,8 @@ def main():
         rmp = RandomMusicPlaylist()
         rmp.play_music()
     else:
-        print "Sorry, only Linux and Mac are currently supported"
-        sys.exit(0)
+        sys.stderr.write("Sorry, only Linux and Mac are currently supported")
+        sys.exit(1)
   
 def check_is_dir(path):
     """Check if a directory exists."""
@@ -65,6 +66,7 @@ class RandomMusicPlaylist:
         """Load configuration variables."""
         self.random_music_home = os.path.join(os.path.expanduser("~"), 
                                               ".random_music")
+        print self.random_music_home
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
             
@@ -124,7 +126,7 @@ class RandomMusicPlaylist:
         config.set('config', 'loop_songs', 'true')
         config.set('config', 'randomise', 'true')
         config.set('config', 'index_dir', os.path.join(self.random_music_home, 
-                                                       "/indicies"))
+                                                       "indicies"))
         config.set('config', 'music_client', 'mplayer')
 
         user_music_dir = ""
@@ -134,7 +136,7 @@ class RandomMusicPlaylist:
         config.set('config', 'music_dirs', user_music_dir)
                 
         with open(self.config_file, 'wb') as configfile:
-            config.write(configfile)        
+            config.write(configfile)
 
     def process_flags(self):
         """Process command-line arguments and options."""
