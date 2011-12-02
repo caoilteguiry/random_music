@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.0.10"
+__version__ = "2.0.11"
 __license__ = "BSD License"
 
 
@@ -256,12 +256,32 @@ class RandomMusicPlaylist:
                 self.songs += sorted(refined_songs)
         else:
             self.songs = original_songs
+        self.num_files = len(self.songs)
 
+
+
+    def _get_song(self):
+        index = self._get_song_index()
+        return self.songs[index] 
+        
+        
+    def _get_song_index(self):
+        if self.randomise:
+            song_index = randint(1, self.num_files)-1
+        else:
+            if (song_index+1) == self.num_files:
+                if self.loop_songs:
+                    song_index = 0
+                else:
+                    sys.exit(0)                    
+            else:
+                song_index += 1
+                        
+        return song_index
     
     def play_music(self):
         """Begin an infinite loop of songs."""
         song_index = -1 # FIXME: hack
-        self.num_files = len(self.songs)
         if self.num_files == 0:
             print "No songs found"
             sys.exit(0)
@@ -273,17 +293,7 @@ class RandomMusicPlaylist:
         print "%d files found." % self.num_files
         while True:
             try:
-                if self.randomise:
-                    song_index = randint(1, self.num_files)-1
-                else:
-                    if (song_index+1) == self.num_files:
-                        if self.loop_songs:
-                            song_index = 0
-                        else:
-                            sys.exit(0)                    
-                    else:
-                        song_index += 1
-                                
+                song_index = self._get_song_index()
                 song = self.songs[song_index]
                 print "Playing song %d of %d" % (song_index+1, self.num_files)
                 print self.clean_song_name(song)
