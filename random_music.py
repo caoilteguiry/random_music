@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.0"
+__version__ = "2.1.2"
 __license__ = "BSD License"
 
 
@@ -65,7 +65,7 @@ def which(name):
     Equivalent of unix which command - return full path to a binary if it
     exists.
     """
-    for path in os.environ["PATH"].split(":"):
+    for path in os.environ["PATH"].split(os.pathsep):
         potential_path = os.path.join(path, name)
         if os.path.exists(potential_path):
             break
@@ -82,7 +82,7 @@ def create_config_file(config_file, random_music_home):
     config.set('config', 'randomise', 'true')
     config.set('config', 'index_dir', os.path.join(random_music_home, 
                                                    "indicies"))
-    music_client = "mplayerio"
+    music_client = "mplayer"
     while not which(music_client):
         music_client = raw_input("The music player '%s' could not be found "
                                    "on your path. Please input a different "
