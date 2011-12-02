@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.0.11"
+__version__ = "2.1.0"
 __license__ = "BSD License"
 
 
@@ -51,18 +51,14 @@ class MissingConfigFileError(_Error):
 
 def main():
     """Generate a playlist and start playing the songs."""
-    if sys.platform in ["linux2", "darwin"]:
-        try:
-            rmp = RandomMusicPlaylist()
-            rmp.play_music()
-        except MissingConfigFileError:
-            create_config_file(RandomMusicPlaylist._get_config_file(), 
-                               RandomMusicPlaylist._get_home_dir())
-            rmp = RandomMusicPlaylist()
-            rmp.play_music()
-    else:
-        sys.stderr.write("Sorry, only Linux and Mac are currently supported")
-        sys.exit(1)
+    try:
+        rmp = RandomMusicPlaylist()
+        rmp.play_music()
+    except MissingConfigFileError:
+        create_config_file(RandomMusicPlaylist._get_config_file(), 
+                           RandomMusicPlaylist._get_home_dir())
+        rmp = RandomMusicPlaylist()
+        rmp.play_music()
 
 
 def create_config_file(config_file, random_music_home):
@@ -225,9 +221,17 @@ class RandomMusicPlaylist:
               "collection this may take some time, so please be patient.")
         new_index_file = "%s/music_index_%s.txt" % (self.index_dir,
                         datetime.datetime.today().strftime("%Y%m%d_%H%M%S"))
-        update_cmd = 'find %s -print -type f > "%s"'% \
-               (" ".join("'%s'"%(d) for d in self.music_dirs), new_index_file)
-        subprocess.check_call(update_cmd, shell=True)
+        #update_cmd = 'find %s -print -type f > "%s"'% \
+        #       (" ".join("'%s'"%(d) for d in self.music_dirs), new_index_file)
+        #subprocess.check_call(update_cmd, shell=True)
+        files = [os.path.join(tup[0], f) for d in self.music_dirs 
+                                         for tup in os.walk(d) 
+                                         for f in tup[2] ]
+        
+        with open(new_index_file, "w") as fh:
+            for filename in files:
+                fh.write("%s\n" % filename)
+            
         print "Music index updated (created index file '%s')" % \
               (new_index_file)
     
