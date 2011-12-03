@@ -3,29 +3,27 @@ collection. It works by creating an index of all of the songs in your music
 collection and then picking a random line/entry from that index file and 
 playing it.
 
+To install, type:
+$ python setup.py install
+
+You may need administrative privileges to do this. 
+
 To run, type:
-$ python random_music.py
+$ music
 
 If it is your first time running, you will be asked to specify a music
 directory for the configuration file. The index file will then be generated.
+
+If you do not have mplayer installed, you will be asked to specify a music
+client. Command-line music players are preferable (e.g. SoX's play)
+
 You can skip through songs by pressing ctrl+c, and can exit by holding
 ctrl+c. 
 
 To see command line options, type:
-$ python random_music.py -h
+$ music -h
 
 The script also supports filename matching, so you may also try the following:
-$ python random_music.py david bowie
-$ python random_music.py david bowie OR lou reed OR rolling stones
+$ music david bowie
+$ music david bowie OR lou reed OR rolling stones
 
-This script will currently only work with unix-variants (e.g. linux, mac),
-but I hopefully should get around to making it cross-platform compatible at
-some point. 
-
-If you do not have mplayer installed, you can edit the config file (config.txt)
-and set music_client to something else.
-
-For convenience, you can add this to your enviornmental path, and alias it to
-something like 'music'; e.g., add the following to your ~/.bashrc:
-PATH=$PATH:~/random_music/
-alias music='random_music.py'
