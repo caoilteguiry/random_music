@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 __license__ = "BSD License"
 
 
@@ -264,8 +264,8 @@ class RandomMusicPlaylist:
     
     def generate_list(self):
         """Open the index file and generate a list of songs."""
-        f = open(self.index_file)
-        original_songs = [line.rstrip() for line in f.readlines()]
+        with open(self.index_file, "r") as fh:
+            original_songs = [line.rstrip() for line in fh.readlines()]
         
         if self.search_terms:
             # refine using search terms
