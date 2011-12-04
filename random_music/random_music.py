@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.4"
+__version__ = "2.1.5"
 __license__ = "BSD License"
 
 
@@ -290,7 +290,7 @@ class RandomMusicPlaylist:
         return self.songs[index] 
         
         
-    def _get_song_index(self):
+    def _get_song_index(self, song_index):
         if self.randomise:
             song_index = randint(1, self.num_files)-1
         else:
@@ -306,7 +306,7 @@ class RandomMusicPlaylist:
     
     def play_music(self):
         """Begin an infinite loop of songs."""
-        song_index = -1 # FIXME: hack
+        song_index = -1
         if self.num_files == 0:
             print "No songs found"
             sys.exit(0)
@@ -318,7 +318,7 @@ class RandomMusicPlaylist:
         print "%d files found." % self.num_files
         while True:
             try:
-                song_index = self._get_song_index()
+                song_index = self._get_song_index(song_index)
                 song = self.songs[song_index]
                 print "Playing song %d of %d" % (song_index+1, self.num_files)
                 print self.clean_song_name(song)
