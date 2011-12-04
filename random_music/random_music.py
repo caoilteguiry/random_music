@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.3"
+__version__ = "2.1.4"
 __license__ = "BSD License"
 
 
@@ -110,7 +110,15 @@ PATHNAME = os.path.abspath(PATHNAME)
 
 class RandomMusicPlaylist:
     """Generate and play random music playlists."""
-    def __init__(self):
+    def __init__(self, config_file=None):
+        self.random_music_home = self._get_home_dir()
+        if not os.path.isdir(self.random_music_home):
+            os.makedirs(self.random_music_home)
+            
+        if config_file and os.path.exists(config_file):
+            self.config_file = config_file
+        else:
+            self.config_file = self._get_config_file()
         self.load_config()
         self.process_flags()
         self.index_file = self.get_index_file()
@@ -127,11 +135,6 @@ class RandomMusicPlaylist:
 
     def load_config(self):
         """Load configuration variables."""
-        self.random_music_home = self._get_home_dir()
-        if not os.path.isdir(self.random_music_home):
-            os.makedirs(self.random_music_home)
-            
-        self.config_file = self._get_config_file()
         if not os.path.exists(self.config_file):
             raise MissingConfigFileError(self.config_file)
             
