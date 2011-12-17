@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.8"
+__version__ = "2.1.9"
 __license__ = "BSD License"
 
 
@@ -57,20 +57,30 @@ def main():
                     dest="update_index", default=False, 
                     help="Update index file")
         parser.add_option("-r", "--randomise", action="store_true", 
-                    dest="randomise", default=False, 
-                    help="Randomise playlist") 
+                    dest="force_randomise", default=False, 
+                    help="Randomise playlist.") 
         #parser.add_option("-l", "--loop", action="store_true", 
         #           dest="loop_songs", default=self.loop_songs,
         #           help="Loop playlist")
         parser.add_option("-l", "--list-only", action="store_true",
                     dest="list_only", default=False, help="List songs only") 
         (options, args) = parser.parse_args()
-        rmp = RandomMusicPlaylist(search_terms=args, options=options)
-        rmp.play_music()        
+
+        update_index = options.update_index
+        force_randomise = options.force_randomise
+        list_only = options.list_only
+        
+        
+        rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
+                                  force_randomise=force_randomise, 
+                                  list_only=list_only)
+        rmp.play_music()
     except MissingConfigFileError:
         create_config_file(RandomMusicPlaylist._get_config_file(), 
                            RandomMusicPlaylist._get_home_dir())
-        rmp = RandomMusicPlaylist(search_terms=args, options=options)
+        rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
+                                  force_randomise=force_randomise, 
+                                  list_only=list_only)
         rmp.play_music()
 
 def which(name):
@@ -121,9 +131,10 @@ def check_is_dir(path):
 PATHNAME, SCRIPTNAME = os.path.split(sys.argv[0])
 PATHNAME = os.path.abspath(PATHNAME)        
 
-class RandomMusicPlaylist:
+class RandomMusicPlaylist(object):
     """Generate and play random music playlists."""
-    def __init__(self, config_file=None, search_terms=None, options=None):
+    def __init__(self, config_file=None, search_terms=None, update_index=False, 
+                                  force_randomise=False, list_only=False):
         self.random_music_home = self._get_home_dir()
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
@@ -138,10 +149,9 @@ class RandomMusicPlaylist:
         else:
             self.search_terms = []
             
-        if options:
-            self.options = options
-        else:
-            self.options = {}
+        self.update_index = update_index
+        self.force_randomise = force_randomise
+        self.list_only = list_only
             
         self.load_config()
         self.process_flags()
@@ -213,15 +223,15 @@ class RandomMusicPlaylist:
                 
         # If randomisation is explicitly set, we enable it outright.. if not
         # it depends on whether we've provided search terms or not
-        if self.options.randomise:
+        if self.force_randomise:
             self.randomise = True
         elif self.search_terms:
             self.randomise = False
         
-        if self.options.update_index:
-            self.update_index()
+        if self.update_index:
+            self._update_index()
             
-        if self.options.list_only:
+        if self.list_only:
             self.music_client = "echo"  # FIXME: unix-only!
             self.loop_songs = False
       
@@ -240,7 +250,7 @@ class RandomMusicPlaylist:
             if index+1 == len(search_terms):
                 self.search_terms.append(b)
    
-    def update_index(self):
+    def _update_index(self):
         """Update the index file."""
         print ("Updating index. Depending on the size of your music "
               "collection this may take some time, so please be patient.")
