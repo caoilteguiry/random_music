@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.5"
+__version__ = "2.1.6"
 __license__ = "BSD License"
 
 
@@ -52,7 +52,20 @@ class MissingConfigFileError(_Error):
 def main():
     """Generate a playlist and start playing the songs."""
     try:
-        rmp = RandomMusicPlaylist()
+        parser = OptionParser()
+        parser.add_option("-u", "--update-index", action="store_true", 
+                    dest="update_index", default=False, 
+                    help="Update index file")
+        parser.add_option("-r", "--randomise", action="store_true", 
+                    dest="randomise", default=False, 
+                    help="Randomise playlist") 
+        #parser.add_option("-l", "--loop", action="store_true", 
+        #           dest="loop_songs", default=self.loop_songs,
+        #           help="Loop playlist")
+        parser.add_option("-l", "--list-only", action="store_true",
+                    dest="list_only", default=False, help="List songs only") 
+        (options, args) = parser.parse_args()        
+        rmp = RandomMusicPlaylist(search_terms=args, options=options)
         rmp.play_music()
     except MissingConfigFileError:
         create_config_file(RandomMusicPlaylist._get_config_file(), 
@@ -110,7 +123,7 @@ PATHNAME = os.path.abspath(PATHNAME)
 
 class RandomMusicPlaylist:
     """Generate and play random music playlists."""
-    def __init__(self, config_file=None):
+    def __init__(self, config_file=None, search_terms=None, options=None):
         self.random_music_home = self._get_home_dir()
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
@@ -119,6 +132,17 @@ class RandomMusicPlaylist:
             self.config_file = config_file
         else:
             self.config_file = self._get_config_file()
+            
+        if search_terms:
+            self.search_terms = search_terms
+        else:
+            self.search_terms = []
+            
+        if options:
+            self.options = options
+        else:
+            self.options = {}
+            
         self.load_config()
         self.process_flags()
         self.index_file = self.get_index_file()
@@ -185,41 +209,21 @@ class RandomMusicPlaylist:
 
     def process_flags(self):
         """Process command-line arguments and options."""
-        default_music_client = self.music_client
-        parser = OptionParser()
-        parser.add_option("-u", "--update-index", action="store_true", 
-                    dest="update_index", default=False, 
-                    help="Update index file")
-        parser.add_option("-r", "--randomise", action="store_true", 
-                    dest="randomise", default=False, 
-                    help="Randomise playlist") 
-        #parser.add_option("-l", "--loop", action="store_true", 
-        #           dest="loop_songs", default=self.loop_songs,
-        #           help="Loop playlist")
-        parser.add_option("-l", "--list-only", action="store_true",
-                    dest="list_only", default=False, help="List songs only") 
-                                        
-        parser.add_option("-m", "--music-client", dest="music_client",
-                    help="Set music_client. Default is "+default_music_client,
-                    metavar="<music-client>", default=default_music_client)
-        (options, args) = parser.parse_args()
-        self.parse_search_terms(args)
+        self.parse_search_terms(self.search_terms)
                 
         # If randomisation is explicitly set, we enable it outright.. if not
         # it depends on whether we've provided search terms or not
-        if options.randomise:
+        if self.options.randomise:
             self.randomise = True
         elif self.search_terms:
             self.randomise = False
         
-        if options.update_index:
+        if self.options.update_index:
             self.update_index()
             
-        if options.list_only:
+        if self.options.list_only:
             self.music_client = "echo"  # FIXME: unix-only!
             self.loop_songs = False
-        else:
-            self.music_client = options.music_client
       
     def parse_search_terms(self, search_terms):
         """Convert search terms to a list (or a list of lists for OR 
