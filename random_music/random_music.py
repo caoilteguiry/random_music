@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.10"
+__version__ = "2.1.11"
 __license__ = "BSD License"
 
 
@@ -69,7 +69,7 @@ def main():
     force_randomise = options.force_randomise
     list_only = options.list_only
     
-    # Try to create a playlist
+    # Try to create a playlist. 
     have_playlist = False
     while not have_playlist:    
         try:        
@@ -300,12 +300,16 @@ class RandomMusicPlaylist(object):
 
 
 
-    def _get_song(self):
-        index = self._get_song_index()
-        return self.songs[index] 
         
         
     def _get_song_index(self, song_index):
+        """
+        Get the next song index. If we are in random mode, we generate a
+        random index, otherwise we increment the index. However, we want
+        to reset the index to 0 if we've reached the end, or exit if 
+        we've specified that we don't want to loop songs.
+        """ 
+        
         if self.randomise:
             song_index = randint(1, self.num_files)-1
         else:
@@ -313,10 +317,9 @@ class RandomMusicPlaylist(object):
                 if self.loop_songs:
                     song_index = 0
                 else:
-                    sys.exit(0)                    
+                    return None
             else:
                 song_index += 1
-                        
         return song_index
     
     def play_music(self):
@@ -334,6 +337,8 @@ class RandomMusicPlaylist(object):
         while True:
             try:
                 song_index = self._get_song_index(song_index)
+                if song_index == None:
+                    sys.exit(0)
                 song = self.songs[song_index]
                 print "Playing song %d of %d" % (song_index+1, self.num_files)
                 print self.clean_song_name(song)
