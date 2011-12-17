@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.7"
+__version__ = "2.1.8"
 __license__ = "BSD License"
 
 
@@ -65,10 +65,11 @@ def main():
         parser.add_option("-l", "--list-only", action="store_true",
                     dest="list_only", default=False, help="List songs only") 
         (options, args) = parser.parse_args()
+        rmp = RandomMusicPlaylist(search_terms=args, options=options)
+        rmp.play_music()        
     except MissingConfigFileError:
         create_config_file(RandomMusicPlaylist._get_config_file(), 
                            RandomMusicPlaylist._get_home_dir())
-    finally:
         rmp = RandomMusicPlaylist(search_terms=args, options=options)
         rmp.play_music()
 
