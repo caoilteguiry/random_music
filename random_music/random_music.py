@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.9"
+__version__ = "2.1.10"
 __license__ = "BSD License"
 
 
@@ -51,38 +51,39 @@ class MissingConfigFileError(_Error):
 
 def main():
     """Parse user args, generate a playlist and start playing the songs."""
-    try:
-        parser = OptionParser()
-        parser.add_option("-u", "--update-index", action="store_true", 
-                    dest="update_index", default=False, 
-                    help="Update index file")
-        parser.add_option("-r", "--randomise", action="store_true", 
-                    dest="force_randomise", default=False, 
-                    help="Randomise playlist.") 
-        #parser.add_option("-l", "--loop", action="store_true", 
-        #           dest="loop_songs", default=self.loop_songs,
-        #           help="Loop playlist")
-        parser.add_option("-l", "--list-only", action="store_true",
-                    dest="list_only", default=False, help="List songs only") 
-        (options, args) = parser.parse_args()
+    parser = OptionParser()
+    parser.add_option("-u", "--update-index", action="store_true", 
+                dest="update_index", default=False, 
+                help="Update index file")
+    parser.add_option("-r", "--randomise", action="store_true", 
+                dest="force_randomise", default=False, 
+                help="Force randomisation when using search terms.") 
+    #parser.add_option("-l", "--loop", action="store_true", 
+    #           dest="loop_songs", default=self.loop_songs,
+    #           help="Loop playlist")
+    parser.add_option("-l", "--list-only", action="store_true",
+                dest="list_only", default=False, help="List songs only") 
+    (options, args) = parser.parse_args()
 
-        update_index = options.update_index
-        force_randomise = options.force_randomise
-        list_only = options.list_only
-        
-        
-        rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
-                                  force_randomise=force_randomise, 
-                                  list_only=list_only)
-        rmp.play_music()
-    except MissingConfigFileError:
-        create_config_file(RandomMusicPlaylist._get_config_file(), 
-                           RandomMusicPlaylist._get_home_dir())
-        rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
-                                  force_randomise=force_randomise, 
-                                  list_only=list_only)
-        rmp.play_music()
-
+    update_index = options.update_index
+    force_randomise = options.force_randomise
+    list_only = options.list_only
+    
+    # Try to create a playlist
+    have_playlist = False
+    while not have_playlist:    
+        try:        
+            rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
+                                      force_randomise=force_randomise, 
+                                      list_only=list_only)
+            have_playlist = True
+        except MissingConfigFileError:
+            create_config_file(RandomMusicPlaylist._get_config_file(), 
+                               RandomMusicPlaylist._get_home_dir())
+    
+    rmp.play_music()
+    
+    
 def which(name):
     """
     Equivalent of unix which command - return full path to a binary if it
