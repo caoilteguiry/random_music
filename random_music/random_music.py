@@ -36,7 +36,7 @@ class DirectoryNotFoundError(_Error):
     def __init__(self, dirname):
         self.dirname = dirname
         self.value = "The '%s' directory could not be found" % dirname
-        Exception.__init__()
+        Exception.__init__(self, self.value)
     def __str__(self):
         return repr(self.value)
 
