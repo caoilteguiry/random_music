@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.11"
+__version__ = "2.1.12"
 __license__ = "BSD License"
 
 
