@@ -9,6 +9,7 @@ setup(
     version = __version__,
     author = u"Caoilte Guiry",   
     author_email = u"", 
+    license='BSD License',
     description = u"Plays a pseudo-random sequence of songs",
     long_description = open(u'README').read(),
     packages = find_packages(),
