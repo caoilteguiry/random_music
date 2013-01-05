@@ -27,7 +27,7 @@ from _exceptions import DirectoryNotFoundError, MissingConfigFileError
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2013 Caoilte Guiry."
-__version__ = "2.1.15"
+__version__ = "2.1.16"
 __license__ = "BSD License"
 
 # Get some info about execution env...
@@ -70,7 +70,7 @@ def main():
                                       list_only=options.list_only)
             have_playlist = True
         except MissingConfigFileError, err_msg:
-            print err_msg
+            sys.stderr.write("%s\n" % err_msg)
             create_config_file(options.config_file, 
                                DEFAULT_HOME_DIR)
     
@@ -87,8 +87,8 @@ def create_config_file(config_file, random_music_home):
     index files are stored
     :type random_music_home: str
     """
-    print "You do not appear to have a config file, lets create one!"
-    print "Creating config file at %s" % config_file
+    sys.stdout.write("You do not appear to have a config file, lets create one!\n")
+    sys.stdout.write("Creating config file at %s\n" % config_file)
     config = RawConfigParser()
     config.add_section('config')
     config.set('config', 'loop_songs', 'true')
@@ -191,13 +191,13 @@ class RandomMusicPlaylist(object):
             # moment. TODO: implement this
             self.music_dirs = config.get("config", "music_dirs").split(",") 
         except NoOptionError:
-            print "No such option in config file"
+            sys.stderr.write("No such option in config file\n")
             sys.exit(1)
         except NoSectionError:
-            print "No such section in config file"
+            sys.stderr.write("No such section in config file\n")
             sys.exit(1)
         except MissingSectionHeaderError:
-            print "Failed to parse config file"
+            sys.stderr.write("Failed to parse config file\n")
             sys.exit(1)
         
         # Verify that our music dirs are actually dirs
@@ -210,13 +210,13 @@ class RandomMusicPlaylist(object):
                 # path containing a folder with a comma in the filename, so 
                 # lets warn of that
                 self.music_dirs.pop(i)
-                print("WARNING: The '%s' directory is invalid. Please review "
-                      "your config file. Please note that directories must "
-                      "not contain commas as these are used as a " 
-                      "delimiter" % path)
+                sys.stdout.write("WARNING: The '%s' directory is invalid. Please review "
+                                 "your config file. Please note that directories must "
+                                 "not contain commas as these are used as a " 
+                                 "delimiter\n" % path)
         
         if not os.path.isdir(self.index_dir):
-            print "Creating indicies path "+self.index_dir
+            sys.stdout.write("Creating indicies path %s\n" % self.index_dir)
             os.mkdir(self.index_dir)
             self._update_index()
 
@@ -265,23 +265,24 @@ class RandomMusicPlaylist(object):
         """
         Update the index file.
         """
-        print ("Updating index. Depending on the size of your music "
-              "collection this may take some time, so please be patient.")
+        start_time = datetime.datetime.now()
+        sys.stdout.write("Updating index. Depending on the size of your music "
+                         "collection this may take some time, so please be patient. "
+                         "(Update started at %s)\n" % start_time)
         new_index_file = "%s/music_index_%s.txt" % (self.index_dir,
-                        datetime.datetime.today().strftime("%Y%m%d_%H%M%S"))
-        #update_cmd = 'find %s -print -type f > "%s"'% \
-        #       (" ".join("'%s'"%(d) for d in self.music_dirs), new_index_file)
-        #subprocess.check_call(update_cmd, shell=True)
-        files = [os.path.join(tup[0], f) for d in self.music_dirs 
+                        start_time.strftime("%Y%m%d_%H%M%S"))
+        files = (os.path.join(tup[0], f) for d in self.music_dirs 
                                          for tup in os.walk(d) 
-                                         for f in tup[2] ]
+                                         for f in tup[2] )
         
         with open(new_index_file, "w") as fh:
             for filename in files:
                 fh.write("%s\n" % filename)
             
-        print "Music index updated (created index file '%s')" % \
-              (new_index_file)
+        end_time = datetime.datetime.now()
+        sys.stdout.write("Music index updated (created index file '%s')\n" 
+                         "Update duration:%s\n" % 
+                         (new_index_file, end_time - start_time))
     
     def get_index_file(self):
         """
@@ -345,21 +346,21 @@ class RandomMusicPlaylist(object):
         """
         song_index = -1
         if self.num_files == 0:
-            print "No songs found"
+            sys.stdout.write("No songs found\n")
             sys.exit(0)
         
         # FIXME: spacebar/pause is an mplayer-specific command
-        print "Press spacebar to pause songs"  
-        print "Press ctrl+c once to skip a song"
-        print "Hold ctrl+c to exit"
-        print "%d files found." % self.num_files
+        sys.stdout.write("Press spacebar to pause songs\n")
+        sys.stdout.write("Press ctrl+c once to skip a song\n")
+        sys.stdout.write("Hold ctrl+c to exit\n")
+        sys.stdout.write("%d files found.\n" % self.num_files)
         while True:
             try:
                 song_index = self._get_song_index(song_index)
                 if song_index == None:
                     sys.exit(0)
                 song = self.songs[song_index]
-                print song
+                sys.stdout.write("%s\n" % song)
                 
                 # Disabled the following as it got pretty annoying seeing a 
                 # torrent of notifications for non-music files (mplayer 
@@ -379,7 +380,7 @@ class RandomMusicPlaylist(object):
                     # HACK to allow repeated ctrl+c to exit outright
                     time.sleep(0.1) 
                 except KeyboardInterrupt:
-                    print "\nExiting..."
+                    sys.stderr.write("\nExiting...\n")
                     sys.exit(0)
 
     # TODO: decouple this
