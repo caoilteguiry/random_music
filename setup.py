@@ -20,4 +20,5 @@ setup(
     entry_points={
         'console_scripts': ['music = random_music.random_music:main']
     },
+    test_suite='random_music.tests'
 )
