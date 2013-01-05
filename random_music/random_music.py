@@ -22,9 +22,12 @@ from ConfigParser import (ConfigParser, NoOptionError, NoSectionError,
                          MissingSectionHeaderError, RawConfigParser)
 from optparse import OptionParser
 
+from utils import which
+from _exceptions import DirectoryNotFoundError, MissingConfigFileError
+
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2013 Caoilte Guiry."
-__version__ = "2.1.14"
+__version__ = "2.1.15"
 __license__ = "BSD License"
 
 # Get some info about execution env...
@@ -34,45 +37,7 @@ PATHNAME = os.path.abspath(PATHNAME)
 # Set some defaults...
 DEFAULT_HOME_DIR = os.path.join(os.path.expanduser("~"), ".random_music") 
 DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_HOME_DIR, "config.txt")
-
-class _Error(Exception):
-    """
-    Parent exception for all custom exceptions in random_music module.
-    """
-
-
-class DirectoryNotFoundError(_Error):
-    """
-    The specified directory could not be found.
-    """
-    def __init__(self, dirname):
-        """
-        :param dirname: name of directory which was not found
-        :type dirname: str
-        """
-        self.dirname = dirname
-        self.value = "The '%s' directory could not be found" % dirname
-        Exception.__init__(self, self.value)
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class MissingConfigFileError(_Error):
-    """
-    Config file could not be found.
-    """
-    def __init__(self, config_file):
-        """
-        :param config_file: the config file which could not be found.
-        :type config_file: str
-        """
-        self.config_file = config_file
-        self.value = "The config file '%s' could not be found" % config_file
-
-    def __str__(self):
-        return repr(self.value)
-
+DEFAULT_MUSIC_CLIENT = "mplayer"
 
 def main():
     """
@@ -110,23 +75,6 @@ def main():
                                DEFAULT_HOME_DIR)
     
     rmp.play_music()
-    
-    
-def which(filename):
-    """
-    Equivalent of unix which command - return full path to a filename if it
-    exists in the current environment, otherwise return None.
-    
-    :param filename: filename we are checking 
-    :type filename: str
-    """
-    for path in os.environ["PATH"].split(os.pathsep):
-        potential_path = os.path.join(path, filename)
-        if os.path.exists(potential_path):
-            break
-        else:
-            potential_path = None
-    return potential_path
 
 
 def create_config_file(config_file, random_music_home):
@@ -146,7 +94,7 @@ def create_config_file(config_file, random_music_home):
     config.set('config', 'randomise', 'true')
     config.set('config', 'index_dir', os.path.join(random_music_home, 
                                                    "indicies"))
-    music_client = "mplayer"
+    music_client = DEFAULT_MUSIC_CLIENT
     while not which(music_client):
         music_client = raw_input("The music player '%s' could not be found "
                                    "on your path. Please input a different "
@@ -413,8 +361,7 @@ class RandomMusicPlaylist(object):
                 if song_index == None:
                     sys.exit(0)
                 song = self.songs[song_index]
-                print "Playing song %d of %d" % (song_index+1, self.num_files)
-                print self.clean_song_name(song)
+                print song
                 
                 # Disabled the following as it got pretty annoying seeing a 
                 # torrent of notifications for non-music files (mplayer 
@@ -440,7 +387,12 @@ class RandomMusicPlaylist(object):
     # TODO: decouple this
     def clean_song_name(self, songname):
         """
-        Remove the music_dir from the beginning of the song name.
+        Remove the music_dir from the beginning of the song name, e.g. given a
+        songname of '/home/caoilte/music/Punk/foo.mp3' and music_dirs of
+        ['/home/caoilte/music'] return '/Punk/foo.mp3'.
+
+        :param songname: the abs path to the song we want to 'clean'
+        :type songname: str
         """
         # Reverse-sort the music_dirs list by string length, as if one 
         # music_dir is a subset of the other (e.g. "/music" and "/music/jazz"),
