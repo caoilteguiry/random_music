@@ -23,34 +23,61 @@ from ConfigParser import (ConfigParser, NoOptionError, NoSectionError,
 from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
-__copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.13"
+__copyright__ = "Copyright (c) 2013 Caoilte Guiry."
+__version__ = "2.1.14"
 __license__ = "BSD License"
 
+# Get some info about execution env...
+PATHNAME, SCRIPTNAME = os.path.split(sys.argv[0])
+PATHNAME = os.path.abspath(PATHNAME)        
+
+# Set some defaults...
+DEFAULT_HOME_DIR = os.path.join(os.path.expanduser("~"), ".random_music") 
+DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_HOME_DIR, "config.txt")
 
 class _Error(Exception):
-    pass
+    """
+    Parent exception for all custom exceptions in random_music module.
+    """
+
 
 class DirectoryNotFoundError(_Error):
-    """The specified directory could not be found."""
+    """
+    The specified directory could not be found.
+    """
     def __init__(self, dirname):
+        """
+        :param dirname: name of directory which was not found
+        :type dirname: str
+        """
         self.dirname = dirname
         self.value = "The '%s' directory could not be found" % dirname
         Exception.__init__(self, self.value)
+
     def __str__(self):
         return repr(self.value)
 
+
 class MissingConfigFileError(_Error):
-    """Config file could not be found."""
+    """
+    Config file could not be found.
+    """
     def __init__(self, config_file):
+        """
+        :param config_file: the config file which could not be found.
+        :type config_file: str
+        """
         self.config_file = config_file
         self.value = "The config file '%s' could not be found" % config_file
+
     def __str__(self):
         return repr(self.value)
 
 
 def main():
-    """Parse user args, generate a playlist and start playing the songs."""
+    """
+    Parse user args, generate a playlist and start playing the songs.
+    """
     parser = OptionParser()
     parser.add_option("-u", "--update-index", action="store_true", 
                 dest="update_index", default=False, 
@@ -58,6 +85,7 @@ def main():
     parser.add_option("-r", "--randomise", action="store_true", 
                 dest="force_randomise", default=False, 
                 help="Force randomisation when using search terms.") 
+    # TODO: implement this
     #parser.add_option("-l", "--loop", action="store_true", 
     #           dest="loop_songs", default=self.loop_songs,
     #           help="Loop playlist")
@@ -78,27 +106,39 @@ def main():
                                       list_only=list_only)
             have_playlist = True
         except MissingConfigFileError:
-            create_config_file(RandomMusicPlaylist._get_config_file(), 
-                               RandomMusicPlaylist._get_home_dir())
+            create_config_file(DEFAULT_CONFIG_FILE, 
+                               DEFAULT_HOME_DIR)
     
     rmp.play_music()
     
     
-def which(name):
+def which(filename):
     """
-    Equivalent of unix which command - return full path to a binary if it
-    exists.
+    Equivalent of unix which command - return full path to a filename if it
+    exists in the current environment, otherwise return None.
+    
+    :param filename: filename we are checking 
+    :type filename: str
     """
     for path in os.environ["PATH"].split(os.pathsep):
-        potential_path = os.path.join(path, name)
+        potential_path = os.path.join(path, filename)
         if os.path.exists(potential_path):
             break
         else:
             potential_path = None
     return potential_path
 
+
 def create_config_file(config_file, random_music_home):
-    """Create a configuration file."""
+    """
+    Create a configuration file.
+
+    :param config_file: path to config file we are creating
+    :type config_file: str
+    :param random_music_home: home of random_music application (i.e. where 
+    index files are stored
+    :type random_music_home: str
+    """
     print "You do not appear to have a config file, lets create one!"
     config = RawConfigParser()
     config.add_section('config')
@@ -125,25 +165,51 @@ def create_config_file(config_file, random_music_home):
 
   
 def check_is_dir(path):
-    """Check if a directory exists."""
+    """
+    Check if a directory exists. Raise a DirectoryNotFoundError exception if
+    not.
+
+    :param path: path we are checking
+    :type path: str
+    """
     if not os.path.isdir(path):
         raise DirectoryNotFoundError(path)
 
-PATHNAME, SCRIPTNAME = os.path.split(sys.argv[0])
-PATHNAME = os.path.abspath(PATHNAME)        
 
 class RandomMusicPlaylist(object):
-    """Generate and play random music playlists."""
+    """
+    Generate and play random music playlists.
+    """
     def __init__(self, config_file=None, search_terms=None, update_index=False, 
                                   force_randomise=False, list_only=False):
-        self.random_music_home = self._get_home_dir()
+        """
+        :param config_file: path to configuration file (optional)
+        :type config_file: str
+        :param search_terms: a list of search terms against which the playlist
+        should be generated. Optional, defaults to an empty list (i.e. find
+        all songs)
+        :type search_terms: list
+        :param update_index: boolean value which denotes whether or not we want
+        to update the songs index or not.
+        :type update_index: bool
+        :param force_randomise: boolean value which denotes whether or not we 
+        want to force randomisation. The default behaviour is to randomise 
+        when no search terms are supplied, and not to randomise if search terms
+        are supplied (typically a user will want to listen to an album in 
+        sequence); this option, when set to true, will randomise in spite of 
+        the method of invocation.
+        :type force_randomise: bool
+        :param list_only: if set to true, we do not play any songs, just list them.
+        :type list_only: bool
+        """
+        self.random_music_home = DEFAULT_HOME_DIR
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
             
         if config_file and os.path.exists(config_file):
             self.config_file = config_file
         else:
-            self.config_file = self._get_config_file()
+            self.config_file = DEFAULT_CONFIG_FILE
             
         if search_terms:
             self.search_terms = search_terms
@@ -159,17 +225,11 @@ class RandomMusicPlaylist(object):
         self.index_file = self.get_index_file()
         self.generate_list()
 
-    @staticmethod
-    def _get_home_dir():
-        return os.path.join(os.path.expanduser("~"), ".random_music")
-
-    @staticmethod    
-    def _get_config_file():
-        return os.path.join(os.path.expanduser("~"), ".random_music", "config.txt")
-
 
     def load_config(self):
-        """Load configuration variables."""
+        """
+        Load configuration variables from config file.
+        """
         if not os.path.exists(self.config_file):
             raise MissingConfigFileError(self.config_file)
             
@@ -204,12 +264,10 @@ class RandomMusicPlaylist(object):
                 # path containing a folder with a comma in the filename, so 
                 # lets warn of that
                 self.music_dirs.pop(i)
-                print ("WARNING: The '%s' directory is invalid. Please review "
-                        "your config file. Please note that directories must "
-                        "not contain commas as these are used as a " 
-                        "delimiter" % path)
-                
-                
+                print("WARNING: The '%s' directory is invalid. Please review "
+                      "your config file. Please note that directories must "
+                      "not contain commas as these are used as a " 
+                      "delimiter" % path)
         
         if not os.path.isdir(self.index_dir):
             print "Creating indicies path "+self.index_dir
@@ -217,9 +275,10 @@ class RandomMusicPlaylist(object):
             self._update_index()
 
 
-
     def process_flags(self):
-        """Process command-line arguments and options."""
+        """
+        Process command-line arguments and options.
+        """
         self.parse_search_terms(self.search_terms)
                 
         # If randomisation is explicitly set, we enable it outright.. if not
@@ -237,8 +296,13 @@ class RandomMusicPlaylist(object):
             self.loop_songs = False
       
     def parse_search_terms(self, search_terms):
-        """Convert search terms to a list (or a list of lists for OR 
-        searches)."""
+        """
+        Convert search terms to a list (or a list of lists for OR 
+        searches).
+
+        :param search_terms: terms against which files will be matched
+        :type search_terms: list[str]
+        """
         # v. kludgish.. TODO: do this a little more gracefully
         self.search_terms, b = [], []
         for index, st in enumerate(search_terms):
@@ -252,7 +316,9 @@ class RandomMusicPlaylist(object):
                 self.search_terms.append(b)
    
     def _update_index(self):
-        """Update the index file."""
+        """
+        Update the index file.
+        """
         print ("Updating index. Depending on the size of your music "
               "collection this may take some time, so please be patient.")
         new_index_file = "%s/music_index_%s.txt" % (self.index_dir,
@@ -272,7 +338,9 @@ class RandomMusicPlaylist(object):
               (new_index_file)
     
     def get_index_file(self):
-        """Get the most up-to-date index file."""
+        """
+        Get the most up-to-date index file.
+        """
         entries = sorted((os.stat(index_file)[ST_MTIME], index_file) 
                         for index_file in glob.glob(self.index_dir+"/*.txt"))
         if len(entries) == 0:
@@ -281,7 +349,9 @@ class RandomMusicPlaylist(object):
         return entries[-1][-1]
     
     def generate_list(self):
-        """Open the index file and generate a list of songs."""
+        """
+        Open the index file and generate a list of songs.
+        """
         with open(self.index_file, "r") as fh:
             original_songs = [line.rstrip() for line in fh.readlines()]
         
@@ -299,21 +369,20 @@ class RandomMusicPlaylist(object):
         self.num_files = len(self.songs)
 
 
-
-        
-        
     def _get_song_index(self, song_index):
         """
         Get the next song index. If we are in random mode, we generate a
         random index, otherwise we increment the index. However, we want
         to reset the index to 0 if we've reached the end, or exit if 
         we've specified that we don't want to loop songs.
+
+        :param song_index: current song index
+        :type song_index: int
         """ 
-        
         if self.randomise:
-            song_index = randint(1, self.num_files)-1
+            song_index = randint(1, self.num_files) - 1
         else:
-            if (song_index+1) == self.num_files:
+            if (song_index + 1) == self.num_files:
                 if self.loop_songs:
                     song_index = 0
                 else:
@@ -322,8 +391,12 @@ class RandomMusicPlaylist(object):
                 song_index += 1
         return song_index
     
+
+    # TODO: this should be decoupled
     def play_music(self):
-        """Begin an infinite loop of songs."""
+        """
+        Begin an infinite loop of songs.
+        """
         song_index = -1
         if self.num_files == 0:
             print "No songs found"
@@ -364,8 +437,11 @@ class RandomMusicPlaylist(object):
                     print "\nExiting..."
                     sys.exit(0)
 
+    # TODO: decouple this
     def clean_song_name(self, songname):
-        """Remove the music_dir from the beginning of the song name."""        
+        """
+        Remove the music_dir from the beginning of the song name.
+        """
         # Reverse-sort the music_dirs list by string length, as if one 
         # music_dir is a subset of the other (e.g. "/music" and "/music/jazz"),
         #  we could end up cutting off too little
