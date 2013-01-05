@@ -27,8 +27,10 @@ from _exceptions import DirectoryNotFoundError, MissingConfigFileError
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2013 Caoilte Guiry."
-__version__ = "2.1.16"
+__version__ = "2.1.17"
 __license__ = "BSD License"
+
+
 
 # Get some info about execution env...
 PATHNAME, SCRIPTNAME = os.path.split(sys.argv[0])
@@ -58,6 +60,9 @@ def main():
                 dest="list_only", default=False, help="List songs only") 
     parser.add_option("-c", "--config_file",
                 dest="config_file", help="Configuration file", default=DEFAULT_CONFIG_FILE)
+    parser.add_option("-n", "--num-songs",
+            dest="num_songs", help="Number of songs to generate/play")
+
 
     (options, args) = parser.parse_args()
     
@@ -67,7 +72,7 @@ def main():
         try:        
             rmp = RandomMusicPlaylist(config_file=options.config_file, search_terms=args, update_index=options.update_index, 
                                       force_randomise=options.force_randomise, 
-                                      list_only=options.list_only)
+                                      list_only=options.list_only, num_songs=options.num_songs)
             have_playlist = True
         except MissingConfigFileError, err_msg:
             sys.stderr.write("%s\n" % err_msg)
@@ -130,7 +135,7 @@ class RandomMusicPlaylist(object):
     Generate and play random music playlists.
     """
     def __init__(self, config_file, search_terms=None, update_index=False, 
-                                  force_randomise=False, list_only=False):
+                                  force_randomise=False, list_only=False, num_songs=None):
         """
         :param config_file: path to configuration file (optional)
         :type config_file: str
@@ -150,6 +155,8 @@ class RandomMusicPlaylist(object):
         :type force_randomise: bool
         :param list_only: if set to true, we do not play any songs, just list them.
         :type list_only: bool
+        :param num_songs: Number of songs to generate (defaults to all found)
+        :type num_songs: int
         """
         self.random_music_home = DEFAULT_HOME_DIR
         if not os.path.isdir(self.random_music_home):
@@ -166,6 +173,14 @@ class RandomMusicPlaylist(object):
         self.force_randomise = force_randomise
         self.list_only = list_only
             
+        try:                                                                         
+            self.num_songs = int(num_songs)                                          
+        except (TypeError, ValueError):                                              
+            # Covers the case where a non-numeric val was passed, or None was passed.
+            self.num_songs = None                                                    
+                                                                             
+
+
         self.load_config()
         self.process_flags()
         self.index_file = self.get_index_file()
@@ -313,7 +328,12 @@ class RandomMusicPlaylist(object):
                 self.songs += sorted(refined_songs)
         else:
             self.songs = original_songs
-        self.num_files = len(self.songs)
+        
+        # If we've specified a num_songs, slice out this much
+        if self.num_songs:                                 
+            self.songs[:] = self.songs[:self.num_songs]    
+        else:
+            self.num_songs = len(self.songs)
 
 
     def _get_song_index(self, song_index):
@@ -327,9 +347,9 @@ class RandomMusicPlaylist(object):
         :type song_index: int
         """ 
         if self.randomise:
-            song_index = randint(1, self.num_files) - 1
+            song_index = randint(1, self.num_songs) - 1
         else:
-            if (song_index + 1) == self.num_files:
+            if (song_index + 1) == self.num_songs:
                 if self.loop_songs:
                     song_index = 0
                 else:
@@ -345,7 +365,7 @@ class RandomMusicPlaylist(object):
         Begin an infinite loop of songs.
         """
         song_index = -1
-        if self.num_files == 0:
+        if self.num_songs  == 0:
             sys.stdout.write("No songs found\n")
             sys.exit(0)
         
@@ -353,7 +373,7 @@ class RandomMusicPlaylist(object):
         sys.stdout.write("Press spacebar to pause songs\n")
         sys.stdout.write("Press ctrl+c once to skip a song\n")
         sys.stdout.write("Hold ctrl+c to exit\n")
-        sys.stdout.write("%d files found.\n" % self.num_files)
+        sys.stdout.write("%d files found.\n" % self.num_songs)
         while True:
             try:
                 song_index = self._get_song_index(song_index)
