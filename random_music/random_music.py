@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 __author__ = "Caoilte Guiry"
 __copyright__ = "Copyright (c) 2011 Caoilte Guiry."
-__version__ = "2.1.12"
+__version__ = "2.1.13"
 __license__ = "BSD License"
 
 
@@ -214,7 +214,7 @@ class RandomMusicPlaylist(object):
         if not os.path.isdir(self.index_dir):
             print "Creating indicies path "+self.index_dir
             os.mkdir(self.index_dir)
-            self.update_index()
+            self._update_index()
 
 
 
