@@ -56,22 +56,22 @@ def main():
     #           help="Loop playlist")
     parser.add_option("-l", "--list-only", action="store_true",
                 dest="list_only", default=False, help="List songs only") 
-    (options, args) = parser.parse_args()
+    parser.add_option("-c", "--config_file",
+                dest="config_file", help="Configuration file", default=DEFAULT_CONFIG_FILE)
 
-    update_index = options.update_index
-    force_randomise = options.force_randomise
-    list_only = options.list_only
+    (options, args) = parser.parse_args()
     
     # Try to create a playlist. 
     have_playlist = False
     while not have_playlist:    
         try:        
-            rmp = RandomMusicPlaylist(search_terms=args, update_index=update_index, 
-                                      force_randomise=force_randomise, 
-                                      list_only=list_only)
+            rmp = RandomMusicPlaylist(config_file=options.config_file, search_terms=args, update_index=options.update_index, 
+                                      force_randomise=options.force_randomise, 
+                                      list_only=options.list_only)
             have_playlist = True
-        except MissingConfigFileError:
-            create_config_file(DEFAULT_CONFIG_FILE, 
+        except MissingConfigFileError, err_msg:
+            print err_msg
+            create_config_file(options.config_file, 
                                DEFAULT_HOME_DIR)
     
     rmp.play_music()
@@ -88,6 +88,7 @@ def create_config_file(config_file, random_music_home):
     :type random_music_home: str
     """
     print "You do not appear to have a config file, lets create one!"
+    print "Creating config file at %s" % config_file
     config = RawConfigParser()
     config.add_section('config')
     config.set('config', 'loop_songs', 'true')
@@ -128,7 +129,7 @@ class RandomMusicPlaylist(object):
     """
     Generate and play random music playlists.
     """
-    def __init__(self, config_file=None, search_terms=None, update_index=False, 
+    def __init__(self, config_file, search_terms=None, update_index=False, 
                                   force_randomise=False, list_only=False):
         """
         :param config_file: path to configuration file (optional)
@@ -154,10 +155,7 @@ class RandomMusicPlaylist(object):
         if not os.path.isdir(self.random_music_home):
             os.makedirs(self.random_music_home)
             
-        if config_file and os.path.exists(config_file):
-            self.config_file = config_file
-        else:
-            self.config_file = DEFAULT_CONFIG_FILE
+        self.config_file = config_file
             
         if search_terms:
             self.search_terms = search_terms
